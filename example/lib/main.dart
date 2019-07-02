@@ -46,13 +46,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-  List<SweetData> dataList = [];
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-  }
 
   void _incrementCounter() {
     setState(() {
@@ -80,14 +73,13 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Container(
-          width: 300,
-          height: 300,
-          child: SweetLineChart(dataList),
-        ),
-      ),
+          // Center is a layout widget. It takes a single child and positions it
+          // in the middle of the parent.
+          child: Container(
+        width: 300,
+        height: 300,
+        child: SweetLineChart(List()),
+      )),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
         tooltip: 'Increment',
