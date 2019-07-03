@@ -45,17 +45,31 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  List<SweetLine> lines;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+  @override
+  void initState() {
+    super.initState();
+    lines = [];
+
+    List<SweetPoint> points = [];
+    var axisData = [
+      {"x": 0, "y": 38},
+      {"x": 1, "y": 100},
+      {"x": 2, "y": 9},
+      {"x": 3, "y": 55},
+      {"x": 4, "y": 60},
+      {"x": 5, "y": 88},
+      {"x": 6, "y": 105},
+      {"x": 7, "y": 99},
+      {"x": 8, "y": 30},
+    ];
+    axisData.forEach((data) {
+      points.add(SweetPoint(xAxis: data["x"], yAxis: data["y"]));
     });
+
+    SweetLine line = SweetLine(points);
+    lines.add(line);
   }
 
   @override
@@ -76,15 +90,13 @@ class _MyHomePageState extends State<MyHomePage> {
           // Center is a layout widget. It takes a single child and positions it
           // in the middle of the parent.
           child: Container(
-        width: 300,
+        color: Colors.white,
+        width: 400,
         height: 300,
-        child: SweetLineChart(List()),
+        child: SweetLineChart(
+          lines: lines,
+        ),
       )),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }

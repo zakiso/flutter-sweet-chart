@@ -20,9 +20,9 @@ class SweetChart extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraint) {
 //      return
-      if(type == SweetChartType.Line){
-        return SweetLineChart(dataList);
-      }
+//      if(type == SweetChartType.Line){
+//        return SweetLineChart(dataList);
+//      }
     });
   }
 }
