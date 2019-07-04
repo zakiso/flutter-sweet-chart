@@ -22,6 +22,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: MyHomePage(title: 'Flutter Demo Home Page'),
+
     );
   }
 }
@@ -56,20 +57,53 @@ class _MyHomePageState extends State<MyHomePage> {
     var axisData = [
       {"x": 0, "y": 38},
       {"x": 1, "y": 100},
-      {"x": 2, "y": 9},
-      {"x": 3, "y": 55},
+      {"x": 2, "y": 50},
+      {"x": 3, "y": 88},
       {"x": 4, "y": 60},
       {"x": 5, "y": 88},
       {"x": 6, "y": 105},
       {"x": 7, "y": 99},
       {"x": 8, "y": 30},
+      {"x": 9, "y": 100},
     ];
     axisData.forEach((data) {
       points.add(SweetPoint(xAxis: data["x"], yAxis: data["y"]));
     });
 
-    SweetLine line = SweetLine(points);
+    SweetLine line = SweetLine(points,
+        lineStyle: LineStyle(
+            bodyType: LineBodyType.Stroke,
+            borderType: LineBorderType.Curve,
+            color: Colors.green[200],
+            width: 2));
     lines.add(line);
+
+
+    List<SweetPoint> pointsTwo = [];
+    var axisDataTwo = [
+      {"x": 0, "y": 88},
+      {"x": 1, "y": 30},
+      {"x": 2, "y": 66},
+      {"x": 3, "y": 33},
+      {"x": 4, "y": 55},
+      {"x": 5, "y": 99},
+      {"x": 6, "y": 139},
+      {"x": 7, "y": 109},
+      {"x": 8, "y": 151},
+      {"x": 9, "y": 28},
+    ];
+    axisDataTwo.forEach((data) {
+      pointsTwo.add(SweetPoint(xAxis: data["x"], yAxis: data["y"]));
+    });
+
+    SweetLine lineTwo = SweetLine(pointsTwo,
+        lineStyle: LineStyle(
+            bodyType: LineBodyType.Stroke,
+            borderType: LineBorderType.Curve,
+            color: Colors.indigoAccent[200],
+            width: 2));
+    lines.add(lineTwo);
+
   }
 
   @override
@@ -92,9 +126,13 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Container(
         color: Colors.white,
         width: 400,
-        height: 300,
+        height: 200,
         child: SweetLineChart(
           lines: lines,
+          chartStyle: LineChartStyle(
+            showXAxis: false,
+            showYAxis: true
+          ),
         ),
       )),
     );

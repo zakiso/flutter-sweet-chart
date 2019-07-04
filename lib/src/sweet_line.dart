@@ -1,7 +1,12 @@
+import 'package:flutter/material.dart';
+import 'package:sweet_chart/src/sweet_line_style.dart';
 import 'package:sweet_chart/src/sweet_point.dart';
 
 class SweetLine {
   List<SweetPoint> points;
+
+  //线样式
+  LineStyle lineStyle;
 
   num _maxXAxisValue;
   num _minXAxisValue;
@@ -16,8 +21,10 @@ class SweetLine {
 
   num get maxXAxisValue => _maxXAxisValue;
 
-  SweetLine(this.points) : assert(points != null && points.length > 0) {
+  SweetLine(this.points, {this.lineStyle})
+      : assert(points != null && points.length > 1) {
     _initData();
+    lineStyle = lineStyle ?? LineStyle();
   }
 
   _initData() {
@@ -25,7 +32,7 @@ class SweetLine {
     _minXAxisValue = points[0].xAxis;
     _maxYAxisValue = points[0].yAxis;
     _minYAxisValue = points[0].yAxis;
-    for(var i=0;i<points.length;i++){
+    for (var i = 0; i < points.length; i++) {
       SweetPoint p = points[i];
       if (p.xAxis > _maxXAxisValue) {
         _maxXAxisValue = p.xAxis;

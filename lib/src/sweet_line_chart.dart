@@ -2,43 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:sweet_chart/src/sweet_line.dart';
 import 'package:sweet_chart/src/sweet_line_style.dart';
 
-class SweetLineChart extends StatelessWidget {
-  //默认横纵坐标的指标个数
-  static const int defaultAxisPointCount = 5;
-
-  //Y轴与文本之间的距离
-  static const int yAxisToTitleSpace = 8;
-
-  //X轴与文本之间的距离
-  static const int xAxisToTitleSpace = 8;
-
-  //y轴文本文本的自身padding值
-  static const int yAxisTitleInsetPadding = 2;
-
+class SweetLineChart extends StatefulWidget {
   final List<SweetLine> lines;
-  final TextStyle xAxisTitleStyle;
-  final TextStyle yAxisTitleStyle;
-  final bool showXAxisTitle;
-  final bool showYAxisTitle;
-  final int xAxisPointCount;
-  final int yAxisPointCount;
-  final num xStartValue;
-  final num xEndValue;
-  final num yStartValue;
-  final num yEndValue;
 
-  SweetLineChart(
-      {this.lines,
-      this.xAxisTitleStyle,
-      this.yAxisTitleStyle,
-      this.showXAxisTitle,
-      this.showYAxisTitle,
-      this.xAxisPointCount = SweetLineChart.defaultAxisPointCount,
-      this.yAxisPointCount = SweetLineChart.defaultAxisPointCount,
-      this.xStartValue,
-      this.xEndValue,
-      this.yStartValue,
-      this.yEndValue});
+  final LineChartStyle chartStyle;
+
+  SweetLineChart({@required this.lines, this.chartStyle})
+      : assert(lines != null && lines.length > 0);
+
+  @override
+  State createState() {
+    return SweetLineChartState();
+  }
+}
+
+class SweetLineChartState extends State<SweetLineChart> {
+  List<SweetLine> lines;
+  LineChartStyle chartStyle;
+
+  @override
+  void initState() {
+    super.initState();
+    lines = widget.lines;
+    chartStyle = widget.chartStyle ?? LineChartStyle();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,9 +36,14 @@ class SweetLineChart extends StatelessWidget {
 }
 
 class SweetLineChartPainter extends CustomPainter {
-  SweetLineChart widget;
+  SweetLineChartState state;
 
-  SweetLineChartPainter(this.widget);
+  SweetLineChartPainter(this.state);
+
+  var maxXAxisValue;
+  var minXAxisValue;
+  var maxYAxisValue;
+  var minYAxisValue;
 
   var pen = Paint()
     ..isAntiAlias = true
@@ -59,17 +51,23 @@ class SweetLineChartPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    _drawAxis(canvas, size);
+    //计算横纵坐标的最大值最小值
+    _calculateValue();
+    //绘制横纵坐标
+    Size axisSize = _drawAxis(canvas, size);
+    //绘制图表
+    _drawChart(canvas, size, axisSize);
   }
 
-  ///绘制坐标轴
-  void _drawAxis(Canvas canvas, Size size) {
+  _calculateValue() {
     //计算横纵坐标的最大坐标和最小坐标
-    var maxXAxisValue = widget.xEndValue ?? widget.lines[0].maxXAxisValue;
-    var minXAxisValue = widget.xStartValue ?? widget.lines[0].minXAxisValue;
-    var maxYAxisValue = widget.yEndValue ?? widget.lines[0].maxYAxisValue;
-    var minYAxisValue = widget.yStartValue ?? widget.lines[0].minYAxisValue;
-    widget.lines.forEach((line) {
+    maxXAxisValue = state.chartStyle.xEndValue ?? state.lines[0].maxXAxisValue;
+    minXAxisValue =
+        state.chartStyle.xStartValue ?? state.lines[0].minXAxisValue;
+    maxYAxisValue = state.chartStyle.yEndValue ?? state.lines[0].maxYAxisValue;
+    minYAxisValue =
+        state.chartStyle.yStartValue ?? state.lines[0].minYAxisValue;
+    state.lines.forEach((line) {
       if (line.maxXAxisValue > maxXAxisValue) {
         maxXAxisValue = line.maxXAxisValue;
       }
@@ -83,75 +81,140 @@ class SweetLineChartPainter extends CustomPainter {
         minYAxisValue = line.minYAxisValue;
       }
     });
+  }
 
-    TextStyle yAxisTitleStyle =
-        widget.yAxisTitleStyle ?? AxisStyle.defaultAxisTitleStyle;
-    TextStyle xAxisTitleStyle =
-        widget.xAxisTitleStyle ?? AxisStyle.defaultAxisTitleStyle;
+  ///绘制坐标轴
+  Size _drawAxis(Canvas canvas, Size size) {
+    TextStyle yAxisTitleStyle = state.chartStyle.yAxisTitleStyle;
+    TextStyle xAxisTitleStyle = state.chartStyle.xAxisTitleStyle;
 
-    //y轴总宽度，包含文本宽度和本身的padding
-    var xAxisHeight =
-        xAxisTitleStyle.fontSize + SweetLineChart.xAxisToTitleSpace;
+    //——x轴总高度，包含文本宽度和本身的padding
+    double xAxisHeight = state.chartStyle.showXAxis
+        ? xAxisTitleStyle.fontSize + state.chartStyle.xAxisToTitleSpace
+        : 0.0;
 
-    num spaceY = (size.height - xAxisHeight) / (widget.yAxisPointCount - 1);
-    num spaceYValue =
-        (maxYAxisValue - minYAxisValue) / (widget.yAxisPointCount - 1);
-    num yAxisTitleWidth = 0;
+    num spaceY =
+        (size.height - xAxisHeight) / (state.chartStyle.yAxisPieceCount - 1);
+    num spaceYValue = (maxYAxisValue - minYAxisValue) /
+        (state.chartStyle.yAxisPieceCount - 1);
 
+    num yAxisWidth = 0.0;
     //画y轴文本
-    for (int i = 0; i < widget.yAxisPointCount; i++) {
-      TextSpan span = new TextSpan(
-          style: yAxisTitleStyle,
-          text: "${(minYAxisValue + (spaceYValue * i)).toInt()}");
-      TextPainter tp = new TextPainter(
-          text: span,
-          textAlign: TextAlign.left,
-          textDirection: TextDirection.ltr);
-      tp.layout();
-      var y = size.height -
-          xAxisHeight -
-          (spaceY * i) -
-          SweetLineChart.yAxisTitleInsetPadding;
-      tp.paint(canvas, Offset(0, y));
-      if (tp.size.width > yAxisTitleWidth) {
-        yAxisTitleWidth = tp.size.width;
+    if (state.chartStyle.showYAxis) {
+      for (int i = 0; i < state.chartStyle.yAxisPieceCount; i++) {
+        TextSpan span = new TextSpan(
+            style: yAxisTitleStyle,
+            text: "${(minYAxisValue + (spaceYValue * i)).toInt()}");
+        TextPainter tp = new TextPainter(
+            text: span,
+            textAlign: TextAlign.left,
+            textDirection: TextDirection.ltr);
+        tp.layout();
+        var y = size.height - xAxisHeight - (spaceY * i) - (tp.height / 2);
+        if (i == 0) {
+          y = y - (tp.height / 2);
+        } else if (i == state.chartStyle.yAxisPieceCount - 1) {
+          y = y + (tp.height / 2);
+        }
+        tp.paint(canvas, Offset(0, y));
+        if (tp.size.width > yAxisWidth) {
+          yAxisWidth = tp.size.width;
+        }
       }
     }
-
-    //y轴总宽度，包含文本宽度和本身的padding
-    var yAxisWidth = yAxisTitleWidth + SweetLineChart.yAxisToTitleSpace;
-
+    //|y轴总宽度，包含文本宽度和本身的padding
+    yAxisWidth +=
+        state.chartStyle.showYAxis ? state.chartStyle.yAxisToTitleSpace : 0.0;
     //画x轴横线
-    for (int i = 0; i < widget.yAxisPointCount; i++) {
+    for (int i = 0; i < state.chartStyle.yAxisPieceCount; i++) {
       pen
         ..style = PaintingStyle.stroke
         ..color = Colors.black12
         ..strokeWidth = 0.5;
-
       var y = size.height - xAxisHeight - (spaceY * i);
-
       canvas.drawLine(Offset(yAxisWidth, y), Offset(size.width, y), pen);
     }
 
-    num spaceXValue = (maxXAxisValue - minXAxisValue) / widget.xAxisPointCount;
-    num spaceX = (size.width - yAxisWidth) / widget.yAxisPointCount;
+    num spaceXValue = (maxXAxisValue - minXAxisValue) /
+        (state.chartStyle.xAxisPieceCount - 1);
+    num spaceX =
+        (size.width - yAxisWidth) / (state.chartStyle.xAxisPieceCount - 1);
     //画x轴标题
-    for (var i = 0; i < widget.xAxisPointCount; i++) {
-      //画x轴文本
-      TextSpan span = new TextSpan(
-          style: xAxisTitleStyle,
-          text: "${(minXAxisValue + (spaceXValue * i)).toInt()}");
-      TextPainter tp = new TextPainter(
-          text: span,
-          textAlign: TextAlign.left,
-          textDirection: TextDirection.ltr);
-      tp.layout();
-      tp.paint(
-          canvas,
-          Offset(yAxisWidth + (spaceX / 2) - (tp.width / 2) + (spaceX * i),
-              size.height - tp.height));
+    if (state.chartStyle.showXAxis) {
+      for (var i = 0; i < state.chartStyle.xAxisPieceCount; i++) {
+        //画x轴文本
+        TextSpan span = new TextSpan(
+            style: xAxisTitleStyle,
+            text: "${(minXAxisValue + (spaceXValue * i)).ceil()}");
+        TextPainter tp = new TextPainter(
+            text: span,
+            textAlign: TextAlign.left,
+            textDirection: TextDirection.ltr);
+        tp.layout();
+
+        var y = size.height - tp.height;
+        //注意x轴如果是最后一个点需要再减去自身文本宽度
+        var x;
+        if (i == 0) {
+          x = yAxisWidth + (spaceX * i);
+        } else if (i == (state.chartStyle.xAxisPieceCount - 1)) {
+          x = yAxisWidth + (spaceX * i) - tp.size.width;
+        } else {
+          x = yAxisWidth + (spaceX * i) - (tp.size.width / 2);
+        }
+        tp.paint(canvas, Offset(x, y));
+      }
     }
+    //返回x轴高度和y轴占用的宽度，用于画图表内容时，获取正确的面积
+    return Size(yAxisWidth, xAxisHeight);
+  }
+
+  ///绘制数据
+  void _drawChart(Canvas canvas, Size size, Size axisSize) {
     //画折线图上的点
+    var startX = axisSize.width; //y轴的宽度
+    var startY = size.height - axisSize.height; //总高度减去x轴高度
+    var availableWidth = size.width - axisSize.width;
+    var availableHeight = size.height - axisSize.height;
+    var xPerValue = availableWidth / (maxXAxisValue - minXAxisValue);
+    var yPerValue = availableHeight / (maxYAxisValue - minYAxisValue);
+    for (var line in state.lines) {
+      Path path = Path();
+      Paint paint = Paint();
+      paint.color = line.lineStyle.color;
+      paint.strokeWidth = line.lineStyle.width;
+
+      if (line.lineStyle.bodyType == LineBodyType.Fill) {
+        paint.style = PaintingStyle.fill;
+      } else {
+        paint.style = PaintingStyle.stroke;
+      }
+
+      for (var i = 0; i < line.points.length; i++) {
+        var point = line.points[i];
+        var x = startX + ((point.xAxis - minXAxisValue) * xPerValue);
+        var y = startY - ((point.yAxis - minYAxisValue) * yPerValue);
+        if (i == 0) {
+          if (line.lineStyle.bodyType == LineBodyType.Fill) {
+            path.moveTo(x, startY);
+            path.lineTo(x, y);
+          } else {
+            path.moveTo(x, y);
+          }
+        } else if (i == line.points.length - 1) {
+          path.lineTo(x, y);
+          if (line.lineStyle.bodyType == LineBodyType.Fill) {
+            path.lineTo(x, startY);
+          }
+        } else {
+          path.lineTo(x, y);
+        }
+      }
+      if (line.lineStyle.bodyType == LineBodyType.Fill) {
+        path.close();
+      }
+      canvas.drawPath(path, paint);
+    }
   }
 
   @override

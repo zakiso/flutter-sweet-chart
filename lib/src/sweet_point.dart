@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/material.dart';
 
 class SweetPoint {
   String title;
@@ -7,5 +8,10 @@ class SweetPoint {
   num xAxis;
   num yAxis;
 
-  SweetPoint({this.title, this.subTitle, this.color, this.xAxis, this.yAxis});
+  SweetPoint(
+      {this.title,
+      this.subTitle,
+      this.color,
+      @required this.xAxis,
+      @required this.yAxis});
 }
