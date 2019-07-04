@@ -72,7 +72,8 @@ class LineChartStyle {
       this.xStartValue,
       this.xEndValue,
       this.yStartValue,
-      this.yEndValue}) {
+      this.yEndValue})
+      : assert(xAxisPieceCount > 1 && yAxisPieceCount > 1) {
     xAxisColor = xAxisColor ?? Colors.grey[300];
     xAxisHeight = xAxisHeight ?? 1;
     xAxisTitleStyle = xAxisTitleStyle ??

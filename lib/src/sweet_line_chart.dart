@@ -32,8 +32,7 @@ class SweetLineChartState extends State<SweetLineChart>
         AnimationController(vsync: this, duration: Duration(milliseconds: 850));
     _animation = Tween(begin: 0.0, end: 1.0).animate(_controller)
       ..addListener(() {
-        setState(() {
-        });
+        setState(() {});
       });
     _controller.forward();
   }
@@ -100,19 +99,23 @@ class SweetLineChartPainter extends CustomPainter {
     TextStyle yAxisTitleStyle = chartStyle.yAxisTitleStyle;
     TextStyle xAxisTitleStyle = chartStyle.xAxisTitleStyle;
 
+    int yAxisPieceCount = chartStyle.yAxisPieceCount > 1 ? chartStyle.yAxisPieceCount : 2;
+    int xAxisPieceCount = chartStyle.xAxisPieceCount > 1 ? chartStyle.xAxisPieceCount : 2;
+
+
     //——x轴总高度，包含文本宽度和本身的padding
     double xAxisHeight = chartStyle.showXAxis
         ? xAxisTitleStyle.fontSize + chartStyle.xAxisToTitleSpace
         : 0.0;
 
-    num spaceY = (size.height - xAxisHeight) / (chartStyle.yAxisPieceCount - 1);
+    num spaceY = (size.height - xAxisHeight) / (yAxisPieceCount - 1);
     num spaceYValue =
-        (maxYAxisValue - minYAxisValue) / (chartStyle.yAxisPieceCount - 1);
+        (maxYAxisValue - minYAxisValue) / (yAxisPieceCount - 1);
 
     num yAxisWidth = 0.0;
     //画y轴文本
     if (chartStyle.showYAxis) {
-      for (int i = 0; i < chartStyle.yAxisPieceCount; i++) {
+      for (int i = 0; i < yAxisPieceCount; i++) {
         TextSpan span = new TextSpan(
             style: yAxisTitleStyle,
             text: "${(minYAxisValue + (spaceYValue * i)).toInt()}");
@@ -124,7 +127,7 @@ class SweetLineChartPainter extends CustomPainter {
         var y = size.height - xAxisHeight - (spaceY * i) - (tp.height / 2);
         if (i == 0) {
           y = y - (tp.height / 2);
-        } else if (i == chartStyle.yAxisPieceCount - 1) {
+        } else if (i == yAxisPieceCount - 1) {
           y = y + (tp.height / 2);
         }
         tp.paint(canvas, Offset(0, y));
@@ -136,7 +139,7 @@ class SweetLineChartPainter extends CustomPainter {
     //|y轴总宽度，包含文本宽度和本身的padding
     yAxisWidth += chartStyle.showYAxis ? chartStyle.yAxisToTitleSpace : 0.0;
     //画x轴横线
-    for (int i = 0; i < chartStyle.yAxisPieceCount; i++) {
+    for (int i = 0; i < yAxisPieceCount; i++) {
       pen
         ..style = PaintingStyle.stroke
         ..color = Colors.black12
@@ -146,11 +149,11 @@ class SweetLineChartPainter extends CustomPainter {
     }
 
     num spaceXValue =
-        (maxXAxisValue - minXAxisValue) / (chartStyle.xAxisPieceCount - 1);
-    num spaceX = (size.width - yAxisWidth) / (chartStyle.xAxisPieceCount - 1);
+        (maxXAxisValue - minXAxisValue) / (xAxisPieceCount - 1);
+    num spaceX = (size.width - yAxisWidth) / (xAxisPieceCount - 1);
     //画x轴标题
     if (chartStyle.showXAxis) {
-      for (var i = 0; i < chartStyle.xAxisPieceCount; i++) {
+      for (var i = 0; i < xAxisPieceCount; i++) {
         //画x轴文本
         TextSpan span = new TextSpan(
             style: xAxisTitleStyle,
@@ -166,7 +169,7 @@ class SweetLineChartPainter extends CustomPainter {
         var x;
         if (i == 0) {
           x = yAxisWidth + (spaceX * i);
-        } else if (i == (chartStyle.xAxisPieceCount - 1)) {
+        } else if (i == (xAxisPieceCount - 1)) {
           x = yAxisWidth + (spaceX * i) - tp.size.width;
         } else {
           x = yAxisWidth + (spaceX * i) - (tp.size.width / 2);
@@ -186,7 +189,8 @@ class SweetLineChartPainter extends CustomPainter {
     var availableWidth = size.width - axisSize.width;
     var availableHeight = size.height - axisSize.height;
     var xPerValue = availableWidth / (maxXAxisValue - minXAxisValue);
-    var yPerValue = availableHeight / (maxYAxisValue - minYAxisValue) ;
+    var yPerValue = availableHeight / (maxYAxisValue - minYAxisValue);
+
     for (var line in lines) {
       Path path = Path();
       Paint paint = Paint();
@@ -198,11 +202,13 @@ class SweetLineChartPainter extends CustomPainter {
       } else {
         paint.style = PaintingStyle.stroke;
       }
-
+      //本条线已绘制的点
+      List<Offset> points = [];
       for (var i = 0; i < line.points.length; i++) {
         var point = line.points[i];
         var x = startX + ((point.xAxis - minXAxisValue) * xPerValue);
-        var y = startY - (((point.yAxis - minYAxisValue) * yPerValue) * animationValue);
+        var y = startY -
+            (((point.yAxis - minYAxisValue) * yPerValue) * animationValue);
         if (i == 0) {
           if (line.lineStyle.bodyType == LineBodyType.Fill) {
             path.moveTo(x, startY);
@@ -216,8 +222,24 @@ class SweetLineChartPainter extends CustomPainter {
             path.lineTo(x, startY);
           }
         } else {
-          path.lineTo(x, y);
+          if (line.lineStyle.borderType == LineBorderType.Curve &&
+              i < line.points.length - 1) {
+            var nextPoint = line.points[i + 1];
+            var nextX =
+                startX + ((nextPoint.xAxis - minXAxisValue) * xPerValue);
+            var nextY = startY -
+                (((nextPoint.yAxis - minYAxisValue) * yPerValue) *
+                    animationValue);
+//            var x1 = x + 10;
+//            var y1 = nextY > y
+//            path.cubicTo(x + 10, y1, x2, y2, x3, y3)
+            //采用一个控制点的贝塞尔曲线，误差有点大，考虑优化为2个控制点
+            path.quadraticBezierTo(x, y, (x + nextX) / 2, (y + nextY) / 2);
+          } else {
+            path.lineTo(x, y);
+          }
         }
+        points.add(Offset(x, y));
       }
       if (line.lineStyle.bodyType == LineBodyType.Fill) {
         path.close();

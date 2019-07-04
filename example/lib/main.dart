@@ -44,7 +44,7 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage>{
+class _MyHomePageState extends State<MyHomePage> {
   List<SweetLine> lines;
   LineChartStyle chartStyle;
 
@@ -120,23 +120,102 @@ class _MyHomePageState extends State<MyHomePage>{
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Center(
-          // Center is a layout widget. It takes a single child and positions it
-          // in the middle of the parent.
-          child: Container(
-        color: Colors.white,
-        width: 400,
-        height: 200,
-        child: SweetLineChart(
-          lines: lines,
-          chartStyle: chartStyle,
-        ),
-      )),
-      floatingActionButton: FloatingActionButton(onPressed: () {
-        setState(() {
-          chartStyle = LineChartStyle(showXAxis: false, showYAxis: true);
-        });
-      }),
+      body: Column(
+        children: <Widget>[
+          Wrap(
+            direction: Axis.horizontal,
+            spacing: 5,
+            children: <Widget>[
+              RaisedButton(
+                  child: Text("显示/隐藏x轴文本"),
+                  onPressed: () {
+                    setState(() {
+                      chartStyle.showXAxis = !chartStyle.showXAxis;
+                    });
+                  }),
+              RaisedButton(
+                  child: Text("显示/隐藏Y轴文本"),
+                  onPressed: () {
+                    setState(() {
+                      chartStyle.showYAxis = !chartStyle.showYAxis;
+                    });
+                  }),
+              RaisedButton(
+                  child: Text("修改/还原Y轴起点数据为0和最大数据为300"),
+                  onPressed: () {
+                    setState(() {
+                      //如果不设置 x和y轴大最大值和最小值，则自动根据line的point中最大值最小值中获取
+                      chartStyle.yStartValue =
+                          chartStyle.yStartValue == null ? 0 : null;
+                      chartStyle.yEndValue =
+                          chartStyle.yEndValue == null ? 300 : null;
+                    });
+                  }),
+              RaisedButton(
+                  child: Text("图表内填充颜色"),
+                  onPressed: () {
+                    setState(() {
+                      //如果不设置 x和y轴大最大值和最小值，则自动根据line的point中最大值最小值中获取
+                      lines[0].lineStyle.bodyType =
+                          lines[0].lineStyle.bodyType == LineBodyType.Fill
+                              ? LineBodyType.Stroke
+                              : LineBodyType.Fill;
+                    });
+                  }),
+              RaisedButton(
+                  child: Text("平滑曲线"),
+                  onPressed: () {
+                    setState(() {
+                      lines.forEach((line) {
+                        line.lineStyle.borderType =
+                            line.lineStyle.borderType == LineBorderType.Curve
+                                ? LineBorderType.Straight
+                                : LineBorderType.Curve;
+                      });
+                    });
+                  }),
+              RaisedButton(
+                  child: Text("增加1个X轴刻度"),
+                  onPressed: () {
+                    setState(() {
+                      chartStyle.xAxisPieceCount += 1;
+                    });
+                  }),
+              RaisedButton(
+                  child: Text("减少1个X轴刻度"),
+                  onPressed: () {
+                    setState(() {
+                      chartStyle.xAxisPieceCount -= 1;
+                    });
+                  }),
+              RaisedButton(
+                  child: Text("增加1个Y轴刻度"),
+                  onPressed: () {
+                    setState(() {
+                      chartStyle.yAxisPieceCount += 1;
+                    });
+                  }),
+
+              RaisedButton(
+                  child: Text("减少1个Y轴刻度"),
+                  onPressed: () {
+                    setState(() {
+                      chartStyle.yAxisPieceCount -= 1;
+                    });
+                  })
+            ],
+          ),
+          Container(
+            color: Colors.white,
+            width: MediaQuery.of(context).size.width,
+            height: 200,
+            child: SweetLineChart(
+              lines: lines,
+              chartStyle: chartStyle,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
