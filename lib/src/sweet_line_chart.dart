@@ -16,29 +16,42 @@ class SweetLineChart extends StatefulWidget {
   }
 }
 
-class SweetLineChartState extends State<SweetLineChart> {
+class SweetLineChartState extends State<SweetLineChart>
+    with SingleTickerProviderStateMixin {
   List<SweetLine> lines;
   LineChartStyle chartStyle;
+  AnimationController _controller;
+  Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
     lines = widget.lines;
     chartStyle = widget.chartStyle ?? LineChartStyle();
+    _controller =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 850));
+    _animation = Tween(begin: 0.0, end: 1.0).animate(_controller)
+      ..addListener(() {
+        setState(() {
+        });
+      });
+    _controller.forward();
   }
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: SweetLineChartPainter(this),
+      painter: SweetLineChartPainter(lines, chartStyle, _animation.value),
     );
   }
 }
 
 class SweetLineChartPainter extends CustomPainter {
-  SweetLineChartState state;
+  List<SweetLine> lines;
+  LineChartStyle chartStyle;
+  double animationValue;
 
-  SweetLineChartPainter(this.state);
+  SweetLineChartPainter(this.lines, this.chartStyle, this.animationValue);
 
   var maxXAxisValue;
   var minXAxisValue;
@@ -51,6 +64,7 @@ class SweetLineChartPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    print("animationValue:$animationValue");
     //计算横纵坐标的最大值最小值
     _calculateValue();
     //绘制横纵坐标
@@ -61,13 +75,11 @@ class SweetLineChartPainter extends CustomPainter {
 
   _calculateValue() {
     //计算横纵坐标的最大坐标和最小坐标
-    maxXAxisValue = state.chartStyle.xEndValue ?? state.lines[0].maxXAxisValue;
-    minXAxisValue =
-        state.chartStyle.xStartValue ?? state.lines[0].minXAxisValue;
-    maxYAxisValue = state.chartStyle.yEndValue ?? state.lines[0].maxYAxisValue;
-    minYAxisValue =
-        state.chartStyle.yStartValue ?? state.lines[0].minYAxisValue;
-    state.lines.forEach((line) {
+    maxXAxisValue = chartStyle.xEndValue ?? lines[0].maxXAxisValue;
+    minXAxisValue = chartStyle.xStartValue ?? lines[0].minXAxisValue;
+    maxYAxisValue = chartStyle.yEndValue ?? lines[0].maxYAxisValue;
+    minYAxisValue = chartStyle.yStartValue ?? lines[0].minYAxisValue;
+    lines.forEach((line) {
       if (line.maxXAxisValue > maxXAxisValue) {
         maxXAxisValue = line.maxXAxisValue;
       }
@@ -85,23 +97,22 @@ class SweetLineChartPainter extends CustomPainter {
 
   ///绘制坐标轴
   Size _drawAxis(Canvas canvas, Size size) {
-    TextStyle yAxisTitleStyle = state.chartStyle.yAxisTitleStyle;
-    TextStyle xAxisTitleStyle = state.chartStyle.xAxisTitleStyle;
+    TextStyle yAxisTitleStyle = chartStyle.yAxisTitleStyle;
+    TextStyle xAxisTitleStyle = chartStyle.xAxisTitleStyle;
 
     //——x轴总高度，包含文本宽度和本身的padding
-    double xAxisHeight = state.chartStyle.showXAxis
-        ? xAxisTitleStyle.fontSize + state.chartStyle.xAxisToTitleSpace
+    double xAxisHeight = chartStyle.showXAxis
+        ? xAxisTitleStyle.fontSize + chartStyle.xAxisToTitleSpace
         : 0.0;
 
-    num spaceY =
-        (size.height - xAxisHeight) / (state.chartStyle.yAxisPieceCount - 1);
-    num spaceYValue = (maxYAxisValue - minYAxisValue) /
-        (state.chartStyle.yAxisPieceCount - 1);
+    num spaceY = (size.height - xAxisHeight) / (chartStyle.yAxisPieceCount - 1);
+    num spaceYValue =
+        (maxYAxisValue - minYAxisValue) / (chartStyle.yAxisPieceCount - 1);
 
     num yAxisWidth = 0.0;
     //画y轴文本
-    if (state.chartStyle.showYAxis) {
-      for (int i = 0; i < state.chartStyle.yAxisPieceCount; i++) {
+    if (chartStyle.showYAxis) {
+      for (int i = 0; i < chartStyle.yAxisPieceCount; i++) {
         TextSpan span = new TextSpan(
             style: yAxisTitleStyle,
             text: "${(minYAxisValue + (spaceYValue * i)).toInt()}");
@@ -113,7 +124,7 @@ class SweetLineChartPainter extends CustomPainter {
         var y = size.height - xAxisHeight - (spaceY * i) - (tp.height / 2);
         if (i == 0) {
           y = y - (tp.height / 2);
-        } else if (i == state.chartStyle.yAxisPieceCount - 1) {
+        } else if (i == chartStyle.yAxisPieceCount - 1) {
           y = y + (tp.height / 2);
         }
         tp.paint(canvas, Offset(0, y));
@@ -123,10 +134,9 @@ class SweetLineChartPainter extends CustomPainter {
       }
     }
     //|y轴总宽度，包含文本宽度和本身的padding
-    yAxisWidth +=
-        state.chartStyle.showYAxis ? state.chartStyle.yAxisToTitleSpace : 0.0;
+    yAxisWidth += chartStyle.showYAxis ? chartStyle.yAxisToTitleSpace : 0.0;
     //画x轴横线
-    for (int i = 0; i < state.chartStyle.yAxisPieceCount; i++) {
+    for (int i = 0; i < chartStyle.yAxisPieceCount; i++) {
       pen
         ..style = PaintingStyle.stroke
         ..color = Colors.black12
@@ -135,13 +145,12 @@ class SweetLineChartPainter extends CustomPainter {
       canvas.drawLine(Offset(yAxisWidth, y), Offset(size.width, y), pen);
     }
 
-    num spaceXValue = (maxXAxisValue - minXAxisValue) /
-        (state.chartStyle.xAxisPieceCount - 1);
-    num spaceX =
-        (size.width - yAxisWidth) / (state.chartStyle.xAxisPieceCount - 1);
+    num spaceXValue =
+        (maxXAxisValue - minXAxisValue) / (chartStyle.xAxisPieceCount - 1);
+    num spaceX = (size.width - yAxisWidth) / (chartStyle.xAxisPieceCount - 1);
     //画x轴标题
-    if (state.chartStyle.showXAxis) {
-      for (var i = 0; i < state.chartStyle.xAxisPieceCount; i++) {
+    if (chartStyle.showXAxis) {
+      for (var i = 0; i < chartStyle.xAxisPieceCount; i++) {
         //画x轴文本
         TextSpan span = new TextSpan(
             style: xAxisTitleStyle,
@@ -157,7 +166,7 @@ class SweetLineChartPainter extends CustomPainter {
         var x;
         if (i == 0) {
           x = yAxisWidth + (spaceX * i);
-        } else if (i == (state.chartStyle.xAxisPieceCount - 1)) {
+        } else if (i == (chartStyle.xAxisPieceCount - 1)) {
           x = yAxisWidth + (spaceX * i) - tp.size.width;
         } else {
           x = yAxisWidth + (spaceX * i) - (tp.size.width / 2);
@@ -177,8 +186,8 @@ class SweetLineChartPainter extends CustomPainter {
     var availableWidth = size.width - axisSize.width;
     var availableHeight = size.height - axisSize.height;
     var xPerValue = availableWidth / (maxXAxisValue - minXAxisValue);
-    var yPerValue = availableHeight / (maxYAxisValue - minYAxisValue);
-    for (var line in state.lines) {
+    var yPerValue = availableHeight / (maxYAxisValue - minYAxisValue) ;
+    for (var line in lines) {
       Path path = Path();
       Paint paint = Paint();
       paint.color = line.lineStyle.color;
@@ -193,7 +202,7 @@ class SweetLineChartPainter extends CustomPainter {
       for (var i = 0; i < line.points.length; i++) {
         var point = line.points[i];
         var x = startX + ((point.xAxis - minXAxisValue) * xPerValue);
-        var y = startY - ((point.yAxis - minYAxisValue) * yPerValue);
+        var y = startY - (((point.yAxis - minYAxisValue) * yPerValue) * animationValue);
         if (i == 0) {
           if (line.lineStyle.bodyType == LineBodyType.Fill) {
             path.moveTo(x, startY);
@@ -218,7 +227,8 @@ class SweetLineChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    return true;
+  bool shouldRepaint(SweetLineChartPainter oldDelegate) {
+    return oldDelegate != this ||
+        oldDelegate.animationValue != this.animationValue;
   }
 }

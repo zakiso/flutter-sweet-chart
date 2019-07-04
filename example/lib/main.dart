@@ -22,7 +22,6 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: MyHomePage(title: 'Flutter Demo Home Page'),
-
     );
   }
 }
@@ -45,8 +44,9 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage>{
   List<SweetLine> lines;
+  LineChartStyle chartStyle;
 
   @override
   void initState() {
@@ -78,7 +78,6 @@ class _MyHomePageState extends State<MyHomePage> {
             width: 2));
     lines.add(line);
 
-
     List<SweetPoint> pointsTwo = [];
     var axisDataTwo = [
       {"x": 0, "y": 88},
@@ -104,6 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
             width: 2));
     lines.add(lineTwo);
 
+    chartStyle = LineChartStyle(showXAxis: true, showYAxis: true);
   }
 
   @override
@@ -129,12 +129,14 @@ class _MyHomePageState extends State<MyHomePage> {
         height: 200,
         child: SweetLineChart(
           lines: lines,
-          chartStyle: LineChartStyle(
-            showXAxis: false,
-            showYAxis: true
-          ),
+          chartStyle: chartStyle,
         ),
       )),
+      floatingActionButton: FloatingActionButton(onPressed: () {
+        setState(() {
+          chartStyle = LineChartStyle(showXAxis: false, showYAxis: true);
+        });
+      }),
     );
   }
 }
