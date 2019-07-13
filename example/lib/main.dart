@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:sweet_chart/sweet_chart.dart';
 
@@ -45,63 +47,31 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<SweetLine> lines;
+  List<SweetLine> lines = [];
   LineChartStyle chartStyle;
 
   @override
   void initState() {
     super.initState();
-    lines = [];
 
     List<SweetPoint> points = [];
-    var axisData = [
-      {"x": 0, "y": 38},
-      {"x": 1, "y": 100},
-      {"x": 2, "y": 50},
-      {"x": 3, "y": 88},
-      {"x": 4, "y": 60},
-      {"x": 5, "y": 88},
-      {"x": 6, "y": 105},
-      {"x": 7, "y": 99},
-      {"x": 8, "y": 30},
-      {"x": 9, "y": 100},
-    ];
-    axisData.forEach((data) {
-      points.add(SweetPoint(xAxis: data["x"], yAxis: data["y"]));
-    });
+    var rng = Random();
+    for (var i = 0; i < 7; i++) {
+      points.add(SweetPoint(value: rng.nextInt(300)));
+    }
 
-    SweetLine line = SweetLine(points,
-        lineStyle: LineStyle(
-            bodyType: LineBodyType.Stroke,
-            borderType: LineBorderType.Curve,
-            color: Colors.green[200],
-            width: 2));
+    var lineStyle = LineStyle(
+        type: LineType.Curve,
+        color: Colors.green[200],
+        width: 2,
+        showPoint: true,
+        pointStyle: PointStyle(
+            color: Colors.white,
+            borderColor: Colors.green[200],
+            borderWidth: 2,
+            size: 2));
+    SweetLine line = SweetLine(points, style: lineStyle);
     lines.add(line);
-
-    List<SweetPoint> pointsTwo = [];
-    var axisDataTwo = [
-      {"x": 0, "y": 88},
-      {"x": 1, "y": 30},
-      {"x": 2, "y": 66},
-      {"x": 3, "y": 33},
-      {"x": 4, "y": 55},
-      {"x": 5, "y": 99},
-      {"x": 6, "y": 139},
-      {"x": 7, "y": 109},
-      {"x": 8, "y": 151},
-      {"x": 9, "y": 28},
-    ];
-    axisDataTwo.forEach((data) {
-      pointsTwo.add(SweetPoint(xAxis: data["x"], yAxis: data["y"]));
-    });
-
-    SweetLine lineTwo = SweetLine(pointsTwo,
-        lineStyle: LineStyle(
-            bodyType: LineBodyType.Stroke,
-            borderType: LineBorderType.Curve,
-            color: Colors.indigoAccent[200],
-            width: 2));
-    lines.add(lineTwo);
 
     chartStyle = LineChartStyle(showXAxis: true, showYAxis: true);
   }
@@ -141,14 +111,15 @@ class _MyHomePageState extends State<MyHomePage> {
                     });
                   }),
               RaisedButton(
-                  child: Text("修改/还原Y轴起点数据为0和最大数据为300"),
+                  //默认Y轴数据起始为数据最小值，顶点为数据最大值，可以通过设置yStartValue和yEndValue进行自定义
+                  child: Text("自定义Y轴起始值和最大值"),
                   onPressed: () {
                     setState(() {
                       //如果不设置 x和y轴大最大值和最小值，则自动根据line的point中最大值最小值中获取
                       chartStyle.yStartValue =
                           chartStyle.yStartValue == null ? 0 : null;
                       chartStyle.yEndValue =
-                          chartStyle.yEndValue == null ? 300 : null;
+                          chartStyle.yEndValue == null ? 500 : null;
                     });
                   }),
               RaisedButton(
@@ -156,10 +127,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   onPressed: () {
                     setState(() {
                       //如果不设置 x和y轴大最大值和最小值，则自动根据line的point中最大值最小值中获取
-                      lines[0].lineStyle.bodyType =
-                          lines[0].lineStyle.bodyType == LineBodyType.Fill
-                              ? LineBodyType.Stroke
-                              : LineBodyType.Fill;
+                      lines[0].style.fillColor = lines[0].style.fillColor !=
+                              null
+                          ? null
+                          : FillColor(
+                              startColor: lines[0].style.color.withAlpha(80),
+                              endColor: lines[0].style.color.withAlpha(10));
                     });
                   }),
               RaisedButton(
@@ -167,25 +140,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   onPressed: () {
                     setState(() {
                       lines.forEach((line) {
-                        line.lineStyle.borderType =
-                            line.lineStyle.borderType == LineBorderType.Curve
-                                ? LineBorderType.Straight
-                                : LineBorderType.Curve;
+                        line.style.type = line.style.type == LineType.Curve
+                            ? LineType.Straight
+                            : LineType.Curve;
                       });
-                    });
-                  }),
-              RaisedButton(
-                  child: Text("增加1个X轴刻度"),
-                  onPressed: () {
-                    setState(() {
-                      chartStyle.xAxisPieceCount += 1;
-                    });
-                  }),
-              RaisedButton(
-                  child: Text("减少1个X轴刻度"),
-                  onPressed: () {
-                    setState(() {
-                      chartStyle.xAxisPieceCount -= 1;
                     });
                   }),
               RaisedButton(
@@ -195,14 +153,31 @@ class _MyHomePageState extends State<MyHomePage> {
                       chartStyle.yAxisPieceCount += 1;
                     });
                   }),
-
               RaisedButton(
                   child: Text("减少1个Y轴刻度"),
                   onPressed: () {
                     setState(() {
                       chartStyle.yAxisPieceCount -= 1;
                     });
-                  })
+                  }),
+              RaisedButton(
+                  child: Text("显示圆点"),
+                  onPressed: () {
+                    setState(() {
+                      lines[0].style.showPoint = !lines[0].style.showPoint;
+                    });
+                  }),
+              RaisedButton(
+                  child: Text("增加/减少一条曲线"),
+                  onPressed: () {
+                    setState(() {
+                      if (lines.length > 1) {
+                        lines.removeLast();
+                      } else {
+                        lines.add(_makeNewLine());
+                      }
+                    });
+                  }),
             ],
           ),
           Container(
@@ -212,10 +187,29 @@ class _MyHomePageState extends State<MyHomePage> {
             child: SweetLineChart(
               lines: lines,
               chartStyle: chartStyle,
+              xTitles: {0: "07/18 00:00", 6: "08/18 23:50"},
+              yTitles: {0: "0k", 1: "15k", 2: "30k"},
             ),
           ),
         ],
       ),
     );
+  }
+
+  SweetLine _makeNewLine() {
+    List<SweetPoint> points = [];
+    var rng = Random();
+    for (var i = 0; i < 7; i++) {
+      points.add(SweetPoint(value: rng.nextInt(300)));
+    }
+    SweetLine line = SweetLine(points,
+        style: LineStyle(
+            fillColor: FillColor(
+                startColor: Colors.red[200].withAlpha(30),
+                endColor: Colors.red[200].withAlpha(10)),
+            type: LineType.Straight,
+            color: Colors.red[200],
+            width: 2));
+    return line;
   }
 }

@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
+enum LineAliment { StartEnd, Center }
+
 class LineChartStyle {
   //默认横纵坐标的指标个数
   static const int defaultAxisPieceCount = 5;
@@ -16,6 +18,9 @@ class LineChartStyle {
 
   //x轴线粗细
   num xAxisHeight;
+
+  //x轴标题对齐方式
+  LineAliment aliment;
 
   //x轴文本样式
   TextStyle xAxisTitleStyle;
@@ -35,9 +40,6 @@ class LineChartStyle {
   //是否显示y轴
   bool showYAxis;
 
-  //X轴数据分多少格
-  int xAxisPieceCount;
-
   //y轴数据分多少格
   int yAxisPieceCount;
 
@@ -56,24 +58,24 @@ class LineChartStyle {
   num xAxisToTitleSpace;
   num yAxisToTitleSpace;
 
-  LineChartStyle(
-      {this.xAxisColor,
-      this.xAxisHeight,
-      this.xAxisTitleStyle,
-      this.xAxisToTitleSpace = defaultAxisToTitleSpace,
-      this.yAxisColor,
-      this.yAxisWidth,
-      this.yAxisTitleStyle,
-      this.yAxisToTitleSpace = defaultAxisToTitleSpace,
-      this.showXAxis = true,
-      this.showYAxis = true,
-      this.xAxisPieceCount = defaultAxisPieceCount,
-      this.yAxisPieceCount = defaultAxisPieceCount,
-      this.xStartValue,
-      this.xEndValue,
-      this.yStartValue,
-      this.yEndValue})
-      : assert(xAxisPieceCount > 1 && yAxisPieceCount > 1) {
+  LineChartStyle({
+    this.xAxisColor,
+    this.xAxisHeight,
+    this.xAxisTitleStyle,
+    this.xAxisToTitleSpace = defaultAxisToTitleSpace,
+    this.yAxisColor,
+    this.yAxisWidth,
+    this.yAxisTitleStyle,
+    this.yAxisToTitleSpace = defaultAxisToTitleSpace,
+    this.showXAxis = true,
+    this.showYAxis = true,
+    this.yAxisPieceCount = defaultAxisPieceCount,
+    this.xStartValue,
+    this.xEndValue,
+    this.yStartValue,
+    this.yEndValue,
+    this.aliment,
+  }) : assert(yAxisPieceCount > 1) {
     xAxisColor = xAxisColor ?? Colors.grey[300];
     xAxisHeight = xAxisHeight ?? 1;
     xAxisTitleStyle = xAxisTitleStyle ??
@@ -85,11 +87,12 @@ class LineChartStyle {
     yAxisColor = yAxisColor ?? xAxisColor;
     yAxisWidth = yAxisWidth ?? xAxisHeight;
     yAxisTitleStyle = yAxisTitleStyle ?? xAxisTitleStyle;
+    aliment = aliment ?? LineAliment.StartEnd;
   }
 }
 
 //Curve or straight line
-enum LineBorderType {
+enum LineType {
   //曲线
   Curve,
   //直线
@@ -97,23 +100,67 @@ enum LineBorderType {
 }
 
 //折线图中间是否填充颜色
-enum LineBodyType {
-  //填充
-  Fill,
-  //空心
-  Stroke
+class FillColor {
+  //渐变填充 开始颜色
+  Color startColor;
+
+  //渐变填充 结束颜色
+  Color endColor;
+
+  FillColor({@required this.startColor, @required this.endColor})
+      : assert(startColor != null && endColor != null,
+            "start color and end color must set of all");
+}
+
+class PointTitle {
+  int index;
+  String title;
+
+  PointTitle({@required this.index, @required this.title})
+      : assert(
+            index != null && title != null, "index and title must not be null");
 }
 
 class LineStyle {
+  //线条颜色
   Color color;
-  double width;
-  LineBorderType borderType;
-  LineBodyType bodyType;
 
-  LineStyle({this.color, this.width, this.borderType, this.bodyType}) {
+  //填充颜色
+  FillColor fillColor;
+
+  bool showPoint;
+
+  PointStyle pointStyle;
+
+  //线条的粗细
+  double width;
+
+  //线条样式，平滑曲线还是折线
+  LineType type;
+
+  LineStyle(
+      {this.color,
+      this.fillColor,
+      this.width,
+      this.type,
+      this.showPoint,
+      this.pointStyle}) {
     color = color ?? Colors.redAccent;
-    borderType = borderType ?? LineBorderType.Straight;
-    bodyType = bodyType ?? LineBodyType.Stroke;
+    type = type ?? LineType.Straight;
     width = width ?? 1;
+    showPoint = showPoint ?? false;
+    pointStyle = pointStyle ?? PointStyle();
+  }
+}
+
+class PointStyle {
+  Color color;
+  Color borderColor;
+  double borderWidth;
+  double size;
+
+  PointStyle({this.color, this.size, this.borderColor, this.borderWidth}) {
+    size = size ?? 2.0;
+    borderWidth = borderWidth ?? 0.0;
   }
 }

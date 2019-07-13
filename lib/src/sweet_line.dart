@@ -6,10 +6,8 @@ class SweetLine {
   List<SweetPoint> points;
 
   //线样式
-  LineStyle lineStyle;
+  LineStyle style;
 
-  num _maxXAxisValue;
-  num _minXAxisValue;
   num _maxYAxisValue;
   num _minYAxisValue;
 
@@ -17,34 +15,23 @@ class SweetLine {
 
   num get maxYAxisValue => _maxYAxisValue;
 
-  num get minXAxisValue => _minXAxisValue;
-
-  num get maxXAxisValue => _maxXAxisValue;
-
-  SweetLine(this.points, {this.lineStyle})
+  SweetLine(this.points, {this.style})
       : assert(points != null && points.length > 1) {
     _initData();
-    lineStyle = lineStyle ?? LineStyle();
+    style = style ?? LineStyle();
   }
 
   _initData() {
-    _maxXAxisValue = points[0].xAxis;
-    _minXAxisValue = points[0].xAxis;
-    _maxYAxisValue = points[0].yAxis;
-    _minYAxisValue = points[0].yAxis;
+    _maxYAxisValue = points[0].value;
+    _minYAxisValue = points[0].value;
     for (var i = 0; i < points.length; i++) {
       SweetPoint p = points[i];
-      if (p.xAxis > _maxXAxisValue) {
-        _maxXAxisValue = p.xAxis;
+
+      if (p.value > _maxYAxisValue) {
+        _maxYAxisValue = p.value;
       }
-      if (p.xAxis < _minXAxisValue) {
-        _minXAxisValue = p.xAxis;
-      }
-      if (p.yAxis > _maxYAxisValue) {
-        _maxYAxisValue = p.yAxis;
-      }
-      if (p.yAxis < _minYAxisValue) {
-        _minYAxisValue = p.yAxis;
+      if (p.value < _minYAxisValue) {
+        _minYAxisValue = p.value;
       }
     }
   }

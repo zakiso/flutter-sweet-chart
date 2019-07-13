@@ -5,13 +5,12 @@ class SweetPoint {
   String title;
   String subTitle;
   Color color;
-  num xAxis;
-  num yAxis;
+  num value;
 
-  SweetPoint(
-      {this.title,
-      this.subTitle,
-      this.color,
-      @required this.xAxis,
-      @required this.yAxis});
+  SweetPoint({
+    @required this.value,
+    this.title,
+    this.subTitle,
+    this.color,
+  }) : assert(value != null, "the value must not null");
 }
