@@ -4,7 +4,7 @@ A flutter chart package.
 
 ### ScreenShot
 
-![1563122544617537.2019-07-15 00_53_50](/Users/zhiqiangdeng/Documents/ProjectSource/FlutterProject/flutter_sweet_chart/media/1563122544617537.2019-07-15 00_53_50.gif)
+![1563122544617537.2019-07-15 00_53_50](./media/1563122544617537.2019-07-15 00_53_50.gif)
 
 ### Getting Started
 
