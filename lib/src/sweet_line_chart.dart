@@ -33,6 +33,7 @@ class SweetLineChartState extends State<SweetLineChart>
   LineChartStyle chartStyle;
   AnimationController _controller;
   Animation<double> _animation;
+  Offset tapPoint;
 
   @override
   void initState() {
@@ -50,9 +51,26 @@ class SweetLineChartState extends State<SweetLineChart>
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: SweetLineChartPainter(
-          lines, chartStyle, _animation.value, widget.xTitles, widget.yTitles),
+    return GestureDetector(
+      onTapUp: (tapDetail) {
+        setState(() {
+          tapPoint = tapDetail.localPosition;
+        });
+      },
+      onHorizontalDragStart: (detail) {
+        setState(() {
+          tapPoint = detail.localPosition;
+        });
+      },
+      onHorizontalDragUpdate: (detail) {
+        setState(() {
+          tapPoint = detail.localPosition;
+        });
+      },
+      child: CustomPaint(
+        painter: SweetLineChartPainter(lines, chartStyle, _animation.value,
+            widget.xTitles, widget.yTitles, this.tapPoint),
+      ),
     );
   }
 }
@@ -63,9 +81,10 @@ class SweetLineChartPainter extends CustomPainter {
   double animationValue;
   Map<int, String> xTitles;
   Map<int, String> yTitles;
+  Offset tapPoint;
 
   SweetLineChartPainter(this.lines, this.chartStyle, this.animationValue,
-      this.xTitles, this.yTitles);
+      this.xTitles, this.yTitles, this.tapPoint);
 
   var maxPointCount;
   var maxYAxisValue;
@@ -245,7 +264,28 @@ class SweetLineChartPainter extends CustomPainter {
         ]);
         canvas.drawPath(path, bodyPaint);
       }
+      if (line.style.showPopTips) {
+        var pointIndex = getTouchPoint(points);
+        if (pointIndex != -1) {
+          _drawTips(
+              points[pointIndex], line.points[pointIndex], line, canvas, size);
+        }
+      }
     }
+  }
+
+  int getTouchPoint(List<Offset> points) {
+    var touchArea = 10;
+
+    for (var i = 0; i < points.length; i++) {
+      var offset = points[i];
+      //判断是否在点击区域中
+      if (tapPoint.dx > offset.dx - touchArea &&
+          tapPoint.dx < offset.dx + touchArea) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   _drawPoint(List<Offset> points, SweetLine line, Canvas canvas) {
@@ -259,10 +299,100 @@ class SweetLineChartPainter extends CustomPainter {
         pointPaint.color =
             line.style.pointStyle.borderColor ?? line.style.color;
         pointPaint.strokeWidth = line.style.pointStyle.borderWidth;
-        var size = line.style.pointStyle.size + line.style.pointStyle.borderWidth/2;
+        var size =
+            line.style.pointStyle.size + line.style.pointStyle.borderWidth / 2;
         canvas.drawCircle(p, size, pointPaint);
       }
     });
+  }
+
+  _drawTips(Offset offset, SweetPoint point, SweetLine line, Canvas canvas,
+      Size size) {
+    var triangleSize = 8;
+    TextSpan span = new TextSpan(
+        style: line.style.popTipStyle.titleStyle, text: point.title ?? "");
+    TextPainter tp = new TextPainter(
+        text: span,
+        textAlign: TextAlign.left,
+        textDirection: TextDirection.ltr);
+    tp.layout();
+
+    TextSpan subSpan = new TextSpan(
+        style: line.style.popTipStyle.subTitleStyle,
+        text: point.subTitle ?? "");
+    TextPainter subTp = new TextPainter(
+        text: subSpan,
+        textAlign: TextAlign.left,
+        textDirection: TextDirection.ltr);
+    subTp.layout();
+
+    double width = (tp.width > subTp.width ? tp.width : subTp.width) +
+        (line.style.popTipStyle.padding * 2);
+    double height = tp.height +
+        subTp.height +
+        line.style.popTipStyle.padding * 2 +
+        line.style.popTipStyle.lineSpace;
+    double left, top, right, bottom;
+
+    if (offset.dx < width / 2) {
+      left = 0;
+      right = 0 + width;
+    } else if ((size.width - offset.dx) < width / 2) {
+      right = width;
+      left = size.width - width;
+    } else {
+      left = offset.dx - width / 2;
+      right = offset.dx + width / 2;
+    }
+
+    Paint paint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = line.style.popTipStyle.color ?? line.style.color;
+    //弹出框向上
+    if (offset.dy >
+        (height + triangleSize + line.style.popTipStyle.pointToTipSpace)) {
+      top = offset.dy -
+          line.style.popTipStyle.pointToTipSpace -
+          triangleSize -
+          height;
+      bottom = top + height;
+      //draw triangle
+      Path p = Path();
+      p.moveTo(offset.dx, offset.dy - line.style.popTipStyle.pointToTipSpace);
+      p.lineTo(offset.dx - triangleSize / 2, bottom);
+      p.lineTo(offset.dx + triangleSize / 2, bottom);
+      p.close();
+      canvas.drawPath(p, paint);
+    } else {
+      //弹出框向下
+      top = offset.dy + line.style.popTipStyle.pointToTipSpace + triangleSize;
+      bottom = top + height;
+      //draw triangle
+      Path p = Path();
+      p.moveTo(offset.dx, offset.dy + line.style.popTipStyle.pointToTipSpace);
+      p.lineTo(offset.dx - triangleSize / 2, top);
+      p.lineTo(offset.dx + triangleSize / 2, top);
+      p.close();
+      canvas.drawPath(p, paint);
+    }
+
+    var radius = Radius.circular(line.style.popTipStyle.radius);
+    var rect = RRect.fromLTRBAndCorners(left, top, right, bottom,
+        topLeft: radius,
+        topRight: radius,
+        bottomLeft: radius,
+        bottomRight: radius);
+    canvas.drawRRect(rect, paint);
+    tp.paint(canvas,
+        Offset(offset.dx - tp.width / 2, top + line.style.popTipStyle.padding));
+    subTp.paint(
+        canvas,
+        Offset(
+            offset.dx - subTp.width / 2,
+            top +
+                line.style.popTipStyle.padding +
+                tp.height +
+                line.style.popTipStyle.lineSpace));
   }
 
   _makeStraightLine(List<Offset> points, Path path, Canvas canvas) {
@@ -292,6 +422,7 @@ class SweetLineChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(SweetLineChartPainter oldDelegate) {
     return oldDelegate != this ||
-        oldDelegate.animationValue != this.animationValue;
+        oldDelegate.animationValue != this.animationValue ||
+        oldDelegate.tapPoint != this.tapPoint;
   }
 }

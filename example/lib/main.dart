@@ -57,7 +57,8 @@ class _MyHomePageState extends State<MyHomePage> {
     List<SweetPoint> points = [];
     var rng = Random();
     for (var i = 0; i < 7; i++) {
-      points.add(SweetPoint(value: rng.nextInt(300)));
+      points.add(SweetPoint(
+          value: rng.nextInt(300), title: "title", subTitle: "subtitle"));
     }
 
     var lineStyle = LineStyle(
@@ -65,6 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
         color: Colors.green[200],
         width: 2,
         showPoint: true,
+        showPopTips: true,
         pointStyle: PointStyle(
             color: Colors.white,
             borderColor: Colors.green[200],

@@ -132,6 +132,9 @@ class LineStyle {
 
   PointStyle pointStyle;
 
+  bool showPopTips;
+  PopTipStyle popTipStyle;
+
   //线条的粗细
   double width;
 
@@ -144,12 +147,17 @@ class LineStyle {
       this.width,
       this.type,
       this.showPoint,
-      this.pointStyle}) {
+      this.pointStyle,
+      this.showPopTips,
+      this.popTipStyle}) {
     color = color ?? Colors.redAccent;
     type = type ?? LineType.Straight;
     width = width ?? 1;
     showPoint = showPoint ?? false;
+    showPopTips = showPopTips ?? false;
+
     pointStyle = pointStyle ?? PointStyle();
+    popTipStyle = popTipStyle ?? PopTipStyle();
   }
 }
 
@@ -162,5 +170,35 @@ class PointStyle {
   PointStyle({this.color, this.size, this.borderColor, this.borderWidth}) {
     size = size ?? 2.0;
     borderWidth = borderWidth ?? 0.0;
+  }
+}
+
+class PopTipStyle {
+  Color color;
+  double radius;
+  TextStyle titleStyle;
+  TextStyle subTitleStyle;
+  double padding;
+  double lineSpace;
+  double pointToTipSpace;
+  bool showSubTitle;
+
+  PopTipStyle(
+      {this.color,
+      this.radius,
+      this.titleStyle,
+      this.showSubTitle,
+      this.subTitleStyle,
+      this.padding,
+      this.lineSpace,
+      this.pointToTipSpace}) {
+    titleStyle = titleStyle ?? TextStyle(color: Colors.white, fontSize: 16);
+    subTitleStyle =
+        subTitleStyle ?? TextStyle(color: Colors.white, fontSize: 13);
+    radius = radius ?? 4;
+    padding = padding ?? 6;
+    lineSpace = lineSpace ?? 2;
+    pointToTipSpace = pointToTipSpace ?? 4;
+    showSubTitle = showSubTitle ?? true;
   }
 }
