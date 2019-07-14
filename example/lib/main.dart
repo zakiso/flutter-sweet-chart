@@ -188,6 +188,21 @@ class _MyHomePageState extends State<MyHomePage> {
                     });
                   }),
               RaisedButton(
+                  child: Text("显示/隐藏点击弹出提示"),
+                  onPressed: () {
+                    setState(() {
+                      lines[0].style.showPopTips = !lines[0].style.showPopTips;
+                    });
+                  }),
+              RaisedButton(
+                  child: Text("弹出提示不显示子标题"),
+                  onPressed: () {
+                    setState(() {
+                      lines[0].style.popTipStyle.showSubTitle =
+                          !lines[0].style.popTipStyle.showSubTitle;
+                    });
+                  }),
+              RaisedButton(
                   child: Text("增加/减少一条曲线"),
                   onPressed: () {
                     setState(() {
@@ -210,14 +225,16 @@ class _MyHomePageState extends State<MyHomePage> {
             child: SweetLineChart(
               lines: lines,
               chartStyle: chartStyle,
-              xTitles: {
-                0: "18",
-                2: "20",
-                4: "30",
-                5: "08/01",
-                6: "02"
+              xTitles: {0: "18", 2: "20", 4: "30", 5: "08/01", 6: "02"},
+              yTitles: {
+                0: "0k",
+                1: "5k",
+                2: "10k",
+                3: "15k",
+                4: "20k",
+                5: "25k",
+                6: "30k"
               },
-              yTitles: {0: "0k", 1: "15k", 2: "30k"},
             ),
           ),
         ],
