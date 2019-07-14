@@ -1,58 +1,61 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-enum LineAliment { StartEnd, Center }
+enum ChartAliment { StartEnd, Center }
 
 class LineChartStyle {
-  //默认横纵坐标的指标个数
+  // 默认横纵坐标的指标个数
   static const int defaultAxisPieceCount = 5;
 
-  //轴与文本之间的距离
+  // 轴与文本之间的距离
   static const int defaultAxisToTitleSpace = 8;
 
-  //y轴文本文本的自身padding值
+  // y轴文本文本的自身padding值
   static const int yAxisTitleInsetPadding = 2;
 
-  //x轴颜色
+  // x轴颜色
   Color xAxisColor;
 
-  //x轴线粗细
+  // x轴线粗细
   num xAxisHeight;
 
-  //x轴标题对齐方式
-  LineAliment aliment;
+  // x轴标题对齐方式
+  ChartAliment aliment;
 
-  //x轴文本样式
+  // x轴文本样式
   TextStyle xAxisTitleStyle;
 
-  //y轴颜色
+  // y轴颜色
   Color yAxisColor;
 
-  //y轴线粗细
+  // y轴线粗细
   num yAxisWidth;
 
-  //y轴文本样式
+  // y轴文本样式
   TextStyle yAxisTitleStyle;
 
-  //是否显示x轴
+  // 是否显示x轴
   bool showXAxis;
 
-  //是否显示y轴
+  // 是否显示y轴
   bool showYAxis;
 
-  //y轴数据分多少格
+  // Y轴显示在图表中
+  bool innerYAxis;
+
+  // y轴数据分多少格
   int yAxisPieceCount;
 
-  //x轴数据起始值大小，不设置默认取 数据源中最小值
+  // x轴数据起始值大小，不设置默认取 数据源中最小值
   num xStartValue;
 
-  //x轴数据结束值大小，不设置默认取 数据源中最大值
+  // x轴数据结束值大小，不设置默认取 数据源中最大值
   num xEndValue;
 
-  //x轴数据起始值大小，不设置默认取 数据源中最小值
+  // x轴数据起始值大小，不设置默认取 数据源中最小值
   num yStartValue;
 
-  //x轴数据结束值大小，不设置默认取 数据源中最大值
+  // x轴数据结束值大小，不设置默认取 数据源中最大值
   num yEndValue;
 
   num xAxisToTitleSpace;
@@ -69,6 +72,7 @@ class LineChartStyle {
     this.yAxisToTitleSpace = defaultAxisToTitleSpace,
     this.showXAxis = true,
     this.showYAxis = true,
+    this.innerYAxis = false,
     this.yAxisPieceCount = defaultAxisPieceCount,
     this.xStartValue,
     this.xEndValue,
@@ -87,24 +91,24 @@ class LineChartStyle {
     yAxisColor = yAxisColor ?? xAxisColor;
     yAxisWidth = yAxisWidth ?? xAxisHeight;
     yAxisTitleStyle = yAxisTitleStyle ?? xAxisTitleStyle;
-    aliment = aliment ?? LineAliment.StartEnd;
+    aliment = aliment ?? ChartAliment.StartEnd;
   }
 }
 
-//Curve or straight line
+// Curve or straight line
 enum LineType {
-  //曲线
+  // 曲线
   Curve,
-  //直线
+  // 直线
   Straight
 }
 
-//折线图中间是否填充颜色
+// 折线图中间是否填充颜色
 class FillColor {
-  //渐变填充 开始颜色
+  // 渐变填充 开始颜色
   Color startColor;
 
-  //渐变填充 结束颜色
+  // 渐变填充 结束颜色
   Color endColor;
 
   FillColor({@required this.startColor, @required this.endColor})
@@ -122,10 +126,10 @@ class PointTitle {
 }
 
 class LineStyle {
-  //线条颜色
+  // 线条颜色
   Color color;
 
-  //填充颜色
+  // 填充颜色
   FillColor fillColor;
 
   bool showPoint;
@@ -135,10 +139,10 @@ class LineStyle {
   bool showPopTips;
   PopTipStyle popTipStyle;
 
-  //线条的粗细
+  // 线条的粗细
   double width;
 
-  //线条样式，平滑曲线还是折线
+  // 线条样式，平滑曲线还是折线
   LineType type;
 
   LineStyle(
@@ -178,7 +182,9 @@ class PopTipStyle {
   double radius;
   TextStyle titleStyle;
   TextStyle subTitleStyle;
-  double padding;
+
+//  double padding;
+  EdgeInsets padding;
   double lineSpace;
   double pointToTipSpace;
   bool showSubTitle;
@@ -196,9 +202,9 @@ class PopTipStyle {
     subTitleStyle =
         subTitleStyle ?? TextStyle(color: Colors.white, fontSize: 13);
     radius = radius ?? 4;
-    padding = padding ?? 6;
     lineSpace = lineSpace ?? 2;
     pointToTipSpace = pointToTipSpace ?? 4;
     showSubTitle = showSubTitle ?? true;
+    padding = EdgeInsets.only(left: 6, right: 6, top: 2, bottom: 2);
   }
 }

@@ -134,10 +134,11 @@ class SweetLineChartPainter extends CustomPainter {
         ? xAxisTitleStyle.fontSize + chartStyle.xAxisToTitleSpace
         : 0.0;
 
-    num spaceY = (size.height - xAxisHeight) / (yAxisPieceCount - 1);
-    num spaceYValue = (maxYAxisValue - minYAxisValue) / (yAxisPieceCount - 1);
+    double spaceY = (size.height - xAxisHeight) / (yAxisPieceCount - 1);
+    double spaceYValue =
+        (maxYAxisValue - minYAxisValue) / (yAxisPieceCount - 1);
 
-    num yAxisWidth = 0.0;
+    double yAxisWidth = 0.0;
     //画y轴文本
     if (chartStyle.showYAxis) {
       for (int i = 0; i < yAxisPieceCount; i++) {
@@ -153,11 +154,13 @@ class SweetLineChartPainter extends CustomPainter {
             textAlign: TextAlign.left,
             textDirection: TextDirection.ltr);
         tp.layout();
-        var y = size.height - xAxisHeight - (spaceY * i) - (tp.height / 2);
-        if (i == 0) {
+        var y = chartStyle.innerYAxis
+            ? size.height - xAxisHeight - (spaceY * i) - tp.height
+            : size.height - xAxisHeight - (spaceY * i) - (tp.height / 2);
+        if (i == 0 && !chartStyle.innerYAxis) {
           y = y - (tp.height / 2);
         } else if (i == yAxisPieceCount - 1) {
-          y = y + (tp.height / 2);
+          y = chartStyle.innerYAxis ? y + tp.height : y + (tp.height / 2);
         }
         tp.paint(canvas, Offset(0, y));
         if (tp.size.width > yAxisWidth) {
@@ -167,6 +170,7 @@ class SweetLineChartPainter extends CustomPainter {
     }
     //|y轴总宽度，包含文本宽度和本身的padding
     yAxisWidth += chartStyle.showYAxis ? chartStyle.yAxisToTitleSpace : 0.0;
+    yAxisWidth = chartStyle.innerYAxis ? 0 : yAxisWidth;
     //画x轴横线
     for (int i = 0; i < yAxisPieceCount; i++) {
       pen
@@ -177,9 +181,9 @@ class SweetLineChartPainter extends CustomPainter {
       canvas.drawLine(Offset(yAxisWidth, y), Offset(size.width, y), pen);
     }
 
-    var aliStartEnd = chartStyle.aliment == LineAliment.StartEnd;
+    var aliStartEnd = chartStyle.aliment == ChartAliment.StartEnd;
     var xPiece = aliStartEnd ? maxPointCount - 1 : maxPointCount;
-    num spaceX = (size.width - yAxisWidth) / (xPiece);
+    double spaceX = (size.width - yAxisWidth) / (xPiece);
     //画x轴标题
     if (chartStyle.showXAxis && xTitles != null && xTitles.length > 0) {
       for (var i = 0; i < maxPointCount; i++) {
@@ -194,13 +198,17 @@ class SweetLineChartPainter extends CustomPainter {
 
         var y = size.height - tp.height;
         //注意x轴如果是最后一个点需要再减去自身文本宽度
-
-        var x = yAxisWidth + (spaceX * i) - (tp.size.width / 2);
-        if (aliStartEnd && i == 0) {
-          x = yAxisWidth + (spaceX * i);
-        }
-        if (aliStartEnd && i == (maxPointCount - 1)) {
-          x = yAxisWidth + (spaceX * i) - tp.size.width;
+        var x;
+        if (!aliStartEnd) {
+          x = yAxisWidth + spaceX * i + spaceX / 2 - (tp.size.width / 2);
+        } else {
+          x = yAxisWidth + (spaceX * i) - (tp.size.width / 2);
+          if (i == 0) {
+            x = yAxisWidth + (spaceX * i);
+          }
+          if (i == (maxPointCount - 1)) {
+            x = yAxisWidth + (spaceX * i) - tp.size.width;
+          }
         }
         tp.paint(canvas, Offset(x, y));
       }
@@ -214,10 +222,14 @@ class SweetLineChartPainter extends CustomPainter {
     //画折线图上的点
     var startX = axisSize.width; //y轴的宽度
     var startY = size.height - axisSize.height; //totalHeight - axis height
-    var availableWidth = size.width - axisSize.width;
-    var availableHeight = size.height - axisSize.height;
-    var xPerValue = availableWidth / (maxPointCount - 1);
-    var yPerValue = availableHeight / (maxYAxisValue - minYAxisValue);
+    double availableWidth = size.width - axisSize.width;
+    double availableHeight = size.height - axisSize.height;
+
+    var aliStartEnd = chartStyle.aliment == ChartAliment.StartEnd;
+    var xPiece = aliStartEnd ? maxPointCount - 1 : maxPointCount;
+
+    double xPerValue = availableWidth / xPiece;
+    double yPerValue = availableHeight / (maxYAxisValue - minYAxisValue);
 
     for (var line in lines) {
       Path path = Path();
@@ -230,7 +242,12 @@ class SweetLineChartPainter extends CustomPainter {
       List<Offset> points = [];
       for (int i = 0; i < line.points.length; i++) {
         var point = line.points[i];
-        var x = startX + (i * xPerValue);
+        var x;
+        if (!aliStartEnd) {
+          x = startX + (i * xPerValue) + xPerValue / 2;
+        } else {
+          x = startX + (i * xPerValue);
+        }
         var y = startY -
             (((point.value - minYAxisValue) * yPerValue) * animationValue);
         points.add(Offset(x, y));
@@ -276,7 +293,9 @@ class SweetLineChartPainter extends CustomPainter {
 
   int getTouchPoint(List<Offset> points) {
     var touchArea = 10;
-
+    if (tapPoint == null) {
+      return -1;
+    }
     for (var i = 0; i < points.length; i++) {
       var offset = points[i];
       //判断是否在点击区域中
@@ -320,17 +339,25 @@ class SweetLineChartPainter extends CustomPainter {
     TextSpan subSpan = new TextSpan(
         style: line.style.popTipStyle.subTitleStyle,
         text: point.subTitle ?? "");
-    TextPainter subTp = new TextPainter(
-        text: subSpan,
-        textAlign: TextAlign.left,
-        textDirection: TextDirection.ltr);
-    subTp.layout();
+    double subTpWidth = 0, subTpHeight = 0;
+    TextPainter subTp;
+    if (line.style.popTipStyle.showSubTitle) {
+      subTp = new TextPainter(
+          text: subSpan,
+          textAlign: TextAlign.left,
+          textDirection: TextDirection.ltr);
+      subTp.layout();
+      subTpWidth = subTp.width;
+      subTpHeight = subTp.height;
+    }
 
-    double width = (tp.width > subTp.width ? tp.width : subTp.width) +
-        (line.style.popTipStyle.padding * 2);
+    double width = (tp.width > subTpWidth ? tp.width : subTpWidth) +
+        (line.style.popTipStyle.padding.left +
+            line.style.popTipStyle.padding.right);
     double height = tp.height +
-        subTp.height +
-        line.style.popTipStyle.padding * 2 +
+        subTpHeight +
+        line.style.popTipStyle.padding.top +
+        line.style.popTipStyle.padding.bottom +
         line.style.popTipStyle.lineSpace;
     double left, top, right, bottom;
 
@@ -338,43 +365,48 @@ class SweetLineChartPainter extends CustomPainter {
       left = 0;
       right = 0 + width;
     } else if ((size.width - offset.dx) < width / 2) {
-      right = width;
+      right = size.width;
       left = size.width - width;
     } else {
       left = offset.dx - width / 2;
       right = offset.dx + width / 2;
     }
 
-    Paint paint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = line.style.popTipStyle.color ?? line.style.color;
+    int popIsUpDirection = -1;
     //弹出框向上
     if (offset.dy >
         (height + triangleSize + line.style.popTipStyle.pointToTipSpace)) {
+      popIsUpDirection = -1;
       top = offset.dy -
           line.style.popTipStyle.pointToTipSpace -
           triangleSize -
           height;
       bottom = top + height;
-      //draw triangle
-      Path p = Path();
-      p.moveTo(offset.dx, offset.dy - line.style.popTipStyle.pointToTipSpace);
-      p.lineTo(offset.dx - triangleSize / 2, bottom);
-      p.lineTo(offset.dx + triangleSize / 2, bottom);
-      p.close();
-      canvas.drawPath(p, paint);
     } else {
       //弹出框向下
+      popIsUpDirection = 1;
       top = offset.dy + line.style.popTipStyle.pointToTipSpace + triangleSize;
       bottom = top + height;
-      //draw triangle
-      Path p = Path();
-      p.moveTo(offset.dx, offset.dy + line.style.popTipStyle.pointToTipSpace);
-      p.lineTo(offset.dx - triangleSize / 2, top);
-      p.lineTo(offset.dx + triangleSize / 2, top);
-      p.close();
-      canvas.drawPath(p, paint);
     }
+
+    //draw pop tips
+    Paint paint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = line.style.popTipStyle.color ?? line.style.color;
+    Path p = Path();
+    p.moveTo(offset.dx,
+        offset.dy + line.style.popTipStyle.pointToTipSpace * popIsUpDirection);
+    var triWidth = triangleSize + line.style.popTipStyle.radius * 2;
+    p.lineTo(
+        offset.dx - triWidth / 2,
+        (popIsUpDirection == -1 ? bottom : top) +
+            line.style.popTipStyle.radius * popIsUpDirection);
+    p.lineTo(
+        offset.dx + triWidth / 2,
+        (popIsUpDirection == -1 ? bottom : top) +
+            line.style.popTipStyle.radius * popIsUpDirection);
+    p.close();
+    canvas.drawPath(p, paint);
 
     var radius = Radius.circular(line.style.popTipStyle.radius);
     var rect = RRect.fromLTRBAndCorners(left, top, right, bottom,
@@ -383,14 +415,23 @@ class SweetLineChartPainter extends CustomPainter {
         bottomLeft: radius,
         bottomRight: radius);
     canvas.drawRRect(rect, paint);
-    tp.paint(canvas,
-        Offset(offset.dx - tp.width / 2, top + line.style.popTipStyle.padding));
-    subTp.paint(
+    var titleX, subTitleX;
+    if (tp.width > subTpWidth) {
+      titleX = left + line.style.popTipStyle.padding.left;
+      subTitleX = subTp == null ? 0 : titleX + (tp.width / 2) - subTp.width / 2;
+    } else {
+      subTitleX = left + line.style.popTipStyle.padding.left;
+      titleX = subTitleX + (subTpWidth / 2) - tp.width / 2;
+    }
+
+    tp.paint(canvas, Offset(titleX, top + line.style.popTipStyle.padding.top));
+
+    subTp?.paint(
         canvas,
         Offset(
-            offset.dx - subTp.width / 2,
+            subTitleX,
             top +
-                line.style.popTipStyle.padding +
+                line.style.popTipStyle.padding.top +
                 tp.height +
                 line.style.popTipStyle.lineSpace));
   }

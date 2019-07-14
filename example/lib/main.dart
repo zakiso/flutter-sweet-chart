@@ -67,6 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
         width: 2,
         showPoint: true,
         showPopTips: true,
+        popTipStyle: PopTipStyle(showSubTitle: true),
         pointStyle: PointStyle(
             color: Colors.white,
             borderColor: Colors.green[200],
@@ -110,6 +111,23 @@ class _MyHomePageState extends State<MyHomePage> {
                   onPressed: () {
                     setState(() {
                       chartStyle.showYAxis = !chartStyle.showYAxis;
+                    });
+                  }),
+              RaisedButton(
+                  child: Text("Y轴文本显示于图表内/外"),
+                  onPressed: () {
+                    setState(() {
+                      chartStyle.innerYAxis = !chartStyle.innerYAxis;
+                    });
+                  }),
+              RaisedButton(
+                  child: Text("居中/左右填满对齐"),
+                  onPressed: () {
+                    setState(() {
+                      chartStyle.aliment =
+                          chartStyle.aliment == ChartAliment.StartEnd
+                              ? ChartAliment.Center
+                              : ChartAliment.StartEnd;
                     });
                   }),
               RaisedButton(
@@ -182,6 +200,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   }),
             ],
           ),
+          SizedBox(
+            height: 12,
+          ),
           Container(
             color: Colors.white,
             width: MediaQuery.of(context).size.width,
@@ -189,7 +210,13 @@ class _MyHomePageState extends State<MyHomePage> {
             child: SweetLineChart(
               lines: lines,
               chartStyle: chartStyle,
-              xTitles: {0: "07/18 00:00", 6: "08/18 23:50"},
+              xTitles: {
+                0: "18",
+                2: "20",
+                4: "30",
+                5: "08/01",
+                6: "02"
+              },
               yTitles: {0: "0k", 1: "15k", 2: "30k"},
             ),
           ),
